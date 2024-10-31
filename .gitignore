@@ -46,3 +46,5 @@ $RECYCLE.BIN/
 
 scripts/*
 tests/*
+
+packages/*
