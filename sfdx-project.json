@@ -1,0 +1,18 @@
+{
+  "packageDirectories": [
+    {
+      "path": "force-app",
+      "default": true,
+      "package": "Trigger Weaver",
+      "dependencies": [
+        {
+            "package": "04tak0000004BMfAAM"
+        }
+      ]
+    }
+  ],
+  "name": "trigger-weaver",
+  "namespace": "",
+  "sfdcLoginUrl": "https://login.salesforce.com",
+  "sourceApiVersion": "62.0"
+}
