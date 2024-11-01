@@ -1,14 +1,21 @@
 {
   "packageDirectories": [
     {
-      "path": "force-app",
+      "path": "trigger-weaver",
       "default": true,
       "package": "Trigger Weaver",
       "dependencies": [
         {
-            "package": "04tak0000004BMfAAM"
+          "package": "04tak0000004BMfAAM"
         }
       ]
+    },
+    {
+      "path": "example",
+      "default": false
+    },
+    {
+      "path": "packages/unpackaged/Apex SOQL Builder"
     }
   ],
   "name": "trigger-weaver",

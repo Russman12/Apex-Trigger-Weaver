@@ -5,28 +5,24 @@
   "description": "Salesforce App",
   "scripts": {
     "lint": "npm run lint:apex && npm run lint:doc",
-    "lint:apex": "sf scanner run --target 'force-app/**/*.cls' --format table --category 'apex-soql-builder' --engine pmd",
+    "lint:apex": "sf scanner run --target 'force-app/**/*.cls' --format table --category 'trigger-weaver' --engine pmd",
     "lint:doc": "write-good README.md --parse",
     "test": "sf apex run test --result-format human --output-dir ./tests/apex --test-level RunLocalTests --wait 20",
     "test:coverage": "sf apex run test --result-format human --output-dir ./tests/apex --test-level RunLocalTests --code-coverage --detailed-coverage --wait 20",
     "prettier": "prettier --write \"**/*.{cls,cmp,component,css,html,js,json,md,page,trigger,xml,yaml,yml}\" --cache",
     "prettier:verify": "prettier --check \"**/*.{cls,cmp,component,css,html,js,json,md,page,trigger,xml,yaml,yml}\"",
     "prepare": "husky",
-    "precommit": "lint-staged",
-    "postinstall": "husky install"
+    "precommit": "npm run prettier && npm run lint",
+    "postinstall": "husky install",
+    "retrieve:pkgs": "sf project retrieve start -n \"Apex SOQL Builder\" --target-metadata-dir packages -z"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.5.0",
     "@commitlint/config-conventional": "^19.5.0",
     "@prettier/plugin-xml": "^3.4.1",
     "husky": "^9.1.6",
-    "lint-staged": "^15.2.10",
     "prettier": "^3.3.3",
-    "prettier-plugin-apex": "^2.2.0"
-  },
-  "lint-staged": {
-    "**/*.{cls,cmp,component,css,html,js,json,md,page,trigger,xml,yaml,yml}": [
-      "prettier --write"
-    ]
+    "prettier-plugin-apex": "^2.2.0",
+    "write-good": "^1.0.8"
   }
 }

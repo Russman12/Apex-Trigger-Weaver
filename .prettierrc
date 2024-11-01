@@ -1,9 +1,7 @@
 {
   "trailingComma": "none",
-  "plugins": [
-    "prettier-plugin-apex",
-    "@prettier/plugin-xml"
-  ],
+  "plugins": ["prettier-plugin-apex", "@prettier/plugin-xml"],
+  "printWidth": 135,
   "overrides": [
     {
       "files": "**/lwc/**/*.html",
