@@ -1,4 +1,7 @@
 public class TW_Handler {
+  //TODO: implement ability to bypass trigger
+  //TODO: implement custom MDT to activate/deactivate TW function
+  //TODO: handle DML operations from operation methods
   private static final Set<System.TriggerOperation> QUERY_CONTEXTS = new Set<System.TriggerOperation>{
     System.TriggerOperation.BEFORE_UPDATE,
     System.TriggerOperation.AFTER_UPDATE,

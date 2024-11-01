@@ -1,4 +1,4 @@
-public with sharing class ContactTWFunction1 extends TW_Function {
+public with sharing class ContactTWAccNameMismatch extends TW_Function {
   protected override ASB_Select afterUpdateSelection(ASB_Select selection) {
     return selection.parent(Contact.AccountId, Account.Name);
   }
@@ -13,4 +13,5 @@ public with sharing class ContactTWFunction1 extends TW_Function {
 
     return null;
   }
+  //TODO: add filter to check for contact name change
 }
