@@ -96,6 +96,28 @@ public abstract class TW_Function {
     return null;
   }
 
+  protected virtual Boolean beforeInsertFilter(SObject newRecord) {
+    return true;
+  }
+  protected virtual Boolean afterInsertFilter(SObject newRecord) {
+    return true;
+  }
+  protected virtual Boolean beforeUpdateFilter(SObject oldRecord, SObject newRecord) {
+    return true;
+  }
+  protected virtual Boolean afterUpdateFilter(SObject oldRecord, SObject newRecord) {
+    return true;
+  }
+  protected virtual Boolean beforeDeleteFilter(SObject oldRecord) {
+    return true;
+  }
+  protected virtual Boolean afterDeleteFilter(SObject oldRecord) {
+    return true;
+  }
+  protected virtual Boolean afterUndeleteFilter(SObject newRecord) {
+    return true;
+  }
+
   public void execute(TW_Context ctx) {
     a.execute(this, ctx);
   }
@@ -111,7 +133,9 @@ public abstract class TW_Function {
     public void execute(TW_Function function, TW_Context ctx) {
       function.beforeInsert(ctx);
       for (SObject newRecord : ctx.newRecords) {
-        function.beforeInsert(newRecord);
+        if (function.beforeInsertFilter(newRecord)) {
+          function.beforeInsert(newRecord);
+        }
       }
     }
     public ASB_SELECT selection(TW_Function function, ASB_Select selection) {
@@ -124,7 +148,9 @@ public abstract class TW_Function {
     public void execute(TW_Function function, TW_Context ctx) {
       function.afterInsert(ctx);
       for (SObject newRecord : ctx.newRecords) {
-        function.afterInsert(newRecord);
+        if (function.afterInsertFilter(newRecord)) {
+          function.afterInsert(newRecord);
+        }
       }
     }
     public ASB_Select selection(TW_Function function, ASB_Select selection) {
@@ -137,7 +163,10 @@ public abstract class TW_Function {
     public void execute(TW_Function function, TW_Context ctx) {
       function.beforeUpdate(ctx);
       for (SObject newRecord : ctx.newRecords) {
-        function.beforeUpdate(ctx.oldRecordsMap.get(newRecord.Id), newRecord, ctx.queriedRecordsMap.get(newRecord.Id));
+        SObject oldRecord = ctx.oldRecordsMap.get(newRecord.Id);
+        if (function.beforeUpdateFilter(oldRecord, newRecord)) {
+          function.beforeUpdate(oldRecord, newRecord, ctx.queriedRecordsMap.get(newRecord.Id));
+        }
       }
     }
     public ASB_Select selection(TW_Function function, ASB_Select selection) {
@@ -150,7 +179,10 @@ public abstract class TW_Function {
     public void execute(TW_Function function, TW_Context ctx) {
       function.afterUpdate(ctx);
       for (SObject newRecord : ctx.newRecords) {
-        function.afterUpdate(ctx.oldRecordsMap.get(newRecord.Id), newRecord, ctx.queriedRecordsMap.get(newRecord.Id));
+        SObject oldRecord = ctx.oldRecordsMap.get(newRecord.Id);
+        if (function.afterUpdateFilter(oldRecord, newRecord)) {
+          function.afterUpdate(oldRecord, newRecord, ctx.queriedRecordsMap.get(newRecord.Id));
+        }
       }
     }
     public ASB_Select selection(TW_Function function, ASB_Select selection) {
@@ -163,7 +195,9 @@ public abstract class TW_Function {
     public void execute(TW_Function function, TW_Context ctx) {
       function.beforeDelete(ctx);
       for (SObject oldRecord : ctx.oldRecords) {
-        function.beforeDelete(oldRecord, ctx.queriedRecordsMap.get(oldRecord.Id));
+        if (function.beforeDeleteFilter(oldRecord)) {
+          function.beforeDelete(oldRecord, ctx.queriedRecordsMap.get(oldRecord.Id));
+        }
       }
     }
     public ASB_Select selection(TW_Function function, ASB_Select selection) {
@@ -176,7 +210,9 @@ public abstract class TW_Function {
     public void execute(TW_Function function, TW_Context ctx) {
       function.afterDelete(ctx);
       for (SObject oldRecord : ctx.oldRecords) {
-        function.afterDelete(oldRecord, ctx.queriedRecordsMap.get(oldRecord.Id));
+        if (function.afterDeleteFilter(oldRecord)) {
+          function.afterDelete(oldRecord, ctx.queriedRecordsMap.get(oldRecord.Id));
+        }
       }
     }
     public ASB_Select selection(TW_Function function, ASB_Select selection) {
@@ -189,7 +225,9 @@ public abstract class TW_Function {
     public void execute(TW_Function function, TW_Context ctx) {
       function.afterUndelete(ctx);
       for (SObject newRecord : ctx.newRecords) {
-        function.afterUndelete(newRecord, ctx.queriedRecordsMap.get(newRecord.Id));
+        if (function.afterUndeleteFilter(newRecord)) {
+          function.afterUndelete(newRecord, ctx.queriedRecordsMap.get(newRecord.Id));
+        }
       }
     }
     public ASB_Select selection(TW_Function function, ASB_Select selection) {

@@ -20,5 +20,11 @@ public with sharing class ContactTWAccNameMismatch extends TW_Function {
 
     return null;
   }
-  //TODO: add filter to check for contact name change
+
+  protected override Boolean afterUpdateFilter(SObject oldRecord, SObject newRecord) {
+    Contact oldContact = (Contact) oldRecord;
+    Contact newContact = (Contact) newRecord;
+    Boolean b = oldContact.FirstName != newContact.FirstName || oldContact.LastName != newContact.LastName;
+    return b;
+  }
 }
