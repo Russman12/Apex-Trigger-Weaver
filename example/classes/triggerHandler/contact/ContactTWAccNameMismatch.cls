@@ -12,9 +12,11 @@ public with sharing class ContactTWAccNameMismatch extends TW_Function {
     Contact newContact = (Contact) newRecord;
     Contact queriedContact = (Contact) queriedRecord;
 
+    List<Account> accUpdates = new List<Account>();
     if (queriedContact.Account.Name != newContact.Name) {
-      return new List<Account>{ new Account(Id = queriedContact.Account.Id, Name = ContactBusinessLogic.fullName(newContact)) };
+      accUpdates.add(new Account(Id = queriedContact.Account.Id, Name = ContactBusinessLogic.fullName(newContact)));
     }
+    update accUpdates;
 
     return null;
   }

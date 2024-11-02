@@ -1,6 +1,5 @@
 public class TW_Handler {
-  //TODO: implement custom MDT to activate/deactivate TW function
-  //TODO: handle DML operations from operation methods
+  //TODO: handle DML operations
   private static final Set<System.TriggerOperation> QUERY_CONTEXTS = new Set<System.TriggerOperation>{
     System.TriggerOperation.BEFORE_UPDATE,
     System.TriggerOperation.AFTER_UPDATE,
@@ -10,6 +9,23 @@ public class TW_Handler {
   };
 
   private static final Set<Type> bypasses = new Set<Type>();
+  private static Map<Schema.SObjectType, List<Trigger_Weaver__mdt>> activeTWSBySObj;
+  private static List<Trigger_Weaver__mdt> getActiveTWSForSObj(Schema.SObjectType sObjType) {
+    if (activeTWSBySObj == null) {
+      activeTWSBySObj = new Map<Schema.SObjectType, List<Trigger_Weaver__mdt>>();
+      for (Trigger_Weaver__mdt tw : Trigger_Weaver__mdt.getAll().values()) {
+        if (tw.Active__c) {
+          SObjectType twSObjType = ((SObject) Type.forName(tw.SObject_Name__c).newInstance()).getSObjectType();
+          if (!activeTWSBySObj.containsKey(twSObjType)) {
+            activeTWSBySObj.put(twSObjType, new List<Trigger_Weaver__mdt>());
+          }
+          activeTWSBySObj.get(twSObjType).add(tw);
+        }
+      }
+    }
+
+    return activeTWSBySObj.get(sObjType);
+  }
 
   /**
    * Adds method with given name to bypasses.
@@ -37,6 +53,7 @@ public class TW_Handler {
   private List<TW_Function> twFunctions = new List<TW_Function>();
   private final ASB_Select selection;
   private final ASB soql;
+  private final SObjectType sObjType;
 
   public static TW_Handler make(Schema.SObjectType sObjType) {
     //throw execption if not in trigger context
@@ -47,6 +64,7 @@ public class TW_Handler {
   }
 
   private TW_Handler(Schema.SObjectType sObjType) {
+    this.sObjType = sObjType;
     if (QUERY_CONTEXTS.contains(Trigger.operationType)) {
       Schema.SObjectField idField = sObjType.getDescribe().fields.getMap().get('Id');
       this.selection = ASB_Select.make().field(idField);
@@ -57,6 +75,14 @@ public class TW_Handler {
   public TW_Handler register(TW_Function function) {
     function.setAction(Trigger.operationType);
     twFunctions.add(function);
+
+    return this;
+  }
+
+  public TW_Handler autoRegister() {
+    for (Trigger_Weaver__mdt tw : getActiveTWSForSObj(this.sObjType)) {
+      register((TW_Function) Type.forName(tw.DeveloperName).newInstance());
+    }
 
     return this;
   }
