@@ -1,4 +1,8 @@
 public with sharing class AccountTWNameChange extends TW_Function {
+  public AccountTWNameChange() {
+    super(AccountTWNameChange.class);
+  }
+
   protected override ASB_Select beforeUpdateSelection(ASB_Select asbSelect) {
     return asbSelect.field(Account.Name).subQuery(ASB_SubQuery.relatedBy(Contact.AccountId).selectField(Contact.Name));
   }

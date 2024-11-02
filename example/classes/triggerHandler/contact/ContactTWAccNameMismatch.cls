@@ -1,7 +1,12 @@
 public with sharing class ContactTWAccNameMismatch extends TW_Function {
+  public ContactTWAccNameMismatch() {
+    super(ContactTWAccNameMismatch.class);
+  }
+
   protected override ASB_Select afterUpdateSelection(ASB_Select selection) {
     return selection.parent(Contact.AccountId, Account.Name);
   }
+
   protected override List<SObject> afterUpdate(SObject oldRecord, SObject newRecord, SObject queriedRecord) {
     Contact oldContact = (Contact) oldRecord;
     Contact newContact = (Contact) newRecord;

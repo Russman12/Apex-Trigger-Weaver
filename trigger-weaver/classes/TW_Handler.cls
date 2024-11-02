@@ -1,5 +1,4 @@
 public class TW_Handler {
-  //TODO: implement ability to bypass trigger
   //TODO: implement custom MDT to activate/deactivate TW function
   //TODO: handle DML operations from operation methods
   private static final Set<System.TriggerOperation> QUERY_CONTEXTS = new Set<System.TriggerOperation>{
@@ -9,6 +8,31 @@ public class TW_Handler {
     System.TriggerOperation.AFTER_DELETE,
     System.TriggerOperation.AFTER_UNDELETE
   };
+
+  private static final Set<Type> bypasses = new Set<Type>();
+
+  /**
+   * Adds method with given name to bypasses.
+   * @param functionName add function to bypasses
+   */
+  public static void addBypass(Type function) {
+    bypasses.add(function);
+  }
+
+  /**
+   * Removes method with given name from bypasses.
+   * @param functionName add function to bypasses
+   */
+  public static void removeBypass(Type function) {
+    bypasses.remove(function);
+  }
+
+  /**
+   * Removes all bypasses
+   */
+  public static void clearBypasses() {
+    bypasses.clear();
+  }
 
   private List<TW_Function> twFunctions = new List<TW_Function>();
   private final ASB_Select selection;
@@ -40,6 +64,10 @@ public class TW_Handler {
   public void execute() {
     TW_Context ctx;
     for (TW_Function function : this.twFunctions) {
+      if (bypasses.contains(function.t)) {
+        continue;
+      }
+
       function.querySelection(this.selection);
     }
     if (this.soql != null) {
@@ -48,6 +76,9 @@ public class TW_Handler {
       ctx = new TW_Context();
     }
     for (TW_Function function : twFunctions) {
+      if (bypasses.contains(function.t)) {
+        continue;
+      }
       function.execute(ctx);
     }
   }

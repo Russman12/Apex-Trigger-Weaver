@@ -1,5 +1,8 @@
 public abstract class TW_Function {
+  public final Type t;
+
   private Action a;
+
   public void setAction(System.TriggerOperation operation) {
     switch on operation {
       when BEFORE_INSERT {
@@ -24,6 +27,10 @@ public abstract class TW_Function {
         a = new AfterUndeleteAction();
       }
     }
+  }
+
+  protected TW_Function(Type t) {
+    this.t = t;
   }
 
   protected virtual ASB_Select beforeUpdateSelection(ASB_Select selection) {
