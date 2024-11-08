@@ -1,237 +1,197 @@
 public abstract class TW_Function {
-  public final Type t;
+  private final System.Type t;
 
-  private Action a;
-
-  public void setAction(System.TriggerOperation operation) {
-    switch on operation {
-      when BEFORE_INSERT {
-        a = new BeforeInsertAction();
-      }
-      when AFTER_INSERT {
-        a = new AfterInsertAction();
-      }
-      when BEFORE_UPDATE {
-        a = new BeforeUpdateAction();
-      }
-      when AFTER_UPDATE {
-        a = new AfterUpdateAction();
-      }
-      when BEFORE_DELETE {
-        a = new BeforeDeleteAction();
-      }
-      when AFTER_DELETE {
-        a = new AfterDeleteAction();
-      }
-      when AFTER_UNDELETE {
-        a = new AfterUndeleteAction();
-      }
-    }
-  }
-
-  protected TW_Function(Type t) {
+  protected TW_Function(System.Type t) {
     this.t = t;
   }
 
-  protected virtual ASB_Select beforeUpdateSelection(ASB_Select selection) {
-    return selection;
-  }
-  protected virtual ASB_Select afterUpdateSelection(ASB_Select selection) {
-    return selection;
-  }
-  protected virtual ASB_Select beforeDeleteSelection(ASB_Select selection) {
-    return selection;
-  }
-  protected virtual ASB_Select afterDeleteSelection(ASB_Select selection) {
-    return selection;
-  }
-  protected virtual ASB_Select afterUndeleteSelection(ASB_Select selection) {
-    return selection;
+  public System.Type getType() {
+    return this.t;
   }
 
-  public ASB_Select querySelection(ASB_Select selection) {
-    return this.a.selection(this, selection);
+  public List<SObject> filteredRecords(TW_Context ctx) {
+    return ctx.filteredRecords(this.t);
   }
 
-  protected virtual List<SObject> beforeInsert(TW_Context ctx) {
+  protected virtual void beforeInsertPreProcess(TW_Context ctx) {
+  }
+  protected virtual void afterInsertPreProcess(TW_Context ctx) {
+  }
+  protected virtual void beforeUpdatePreProcess(TW_Context ctx) {
+  }
+  protected virtual void afterUpdatePreProcess(TW_Context ctx) {
+  }
+  protected virtual void beforeDeletePreProcess(TW_Context ctx) {
+  }
+  protected virtual void afterDeletePreProcess(TW_Context ctx) {
+  }
+  protected virtual void afterUndeletePreProcess(TW_Context ctx) {
+  }
+
+  protected virtual List<SObject> beforeInsert(TW_Context ctx, SObject newRecord) {
     return null;
   }
-  protected virtual List<SObject> beforeInsert(SObject newRecord) {
+  protected virtual List<SObject> afterInsert(TW_Context ctx, SObject newRecord, SObject queriedRecord) {
     return null;
   }
-  protected virtual List<SObject> afterInsert(TW_Context ctx) {
+  protected virtual List<SObject> beforeUpdate(TW_Context ctx, SObject oldRecord, SObject newRecord, SObject queriedRecord) {
     return null;
   }
-  protected virtual List<SObject> afterInsert(SObject newRecord) {
+  protected virtual List<SObject> afterUpdate(TW_Context ctx, SObject oldRecord, SObject newRecord, SObject queriedRecord) {
     return null;
   }
-  protected virtual List<SObject> beforeUpdate(TW_Context ctx) {
+  protected virtual List<SObject> beforeDelete(TW_Context ctx, SObject oldRecord, SObject queriedRecord) {
     return null;
   }
-  protected virtual List<SObject> beforeUpdate(SObject oldRecord, SObject newRecord, SObject queriedRecord) {
+  protected virtual List<SObject> afterDelete(TW_Context ctx, SObject oldRecord, SObject queriedRecord) {
     return null;
   }
-  protected virtual List<SObject> afterUpdate(TW_Context ctx) {
-    return null;
-  }
-  protected virtual List<SObject> afterUpdate(SObject oldRecord, SObject newRecord, SObject queriedRecord) {
-    return null;
-  }
-  protected virtual List<SObject> beforeDelete(TW_Context ctx) {
-    return null;
-  }
-  protected virtual List<SObject> beforeDelete(SObject oldRecord, SObject queriedRecord) {
-    return null;
-  }
-  protected virtual List<SObject> afterDelete(TW_Context ctx) {
-    return null;
-  }
-  protected virtual List<SObject> afterDelete(SObject oldRecord, SObject queriedRecord) {
-    return null;
-  }
-  protected virtual List<SObject> afterUndelete(TW_Context ctx) {
-    return null;
-  }
-  protected virtual List<SObject> afterUndelete(SObject newRecord, SObject queriedRecord) {
+  protected virtual List<SObject> afterUndelete(TW_Context ctx, SObject newRecord, SObject queriedRecord) {
     return null;
   }
 
-  protected virtual Boolean beforeInsertFilter(SObject newRecord) {
+  protected virtual Boolean beforeInsertFilter(TW_Context ctx, SObject newRecord) {
     return true;
   }
-  protected virtual Boolean afterInsertFilter(SObject newRecord) {
+  protected virtual Boolean afterInsertFilter(TW_Context ctx, SObject newRecord) {
     return true;
   }
-  protected virtual Boolean beforeUpdateFilter(SObject oldRecord, SObject newRecord) {
+  protected virtual Boolean beforeUpdateFilter(TW_Context ctx, SObject oldRecord, SObject newRecord) {
     return true;
   }
-  protected virtual Boolean afterUpdateFilter(SObject oldRecord, SObject newRecord) {
+  protected virtual Boolean afterUpdateFilter(TW_Context ctx, SObject oldRecord, SObject newRecord) {
     return true;
   }
-  protected virtual Boolean beforeDeleteFilter(SObject oldRecord) {
+  protected virtual Boolean beforeDeleteFilter(TW_Context ctx, SObject oldRecord) {
     return true;
   }
-  protected virtual Boolean afterDeleteFilter(SObject oldRecord) {
+  protected virtual Boolean afterDeleteFilter(TW_Context ctx, SObject oldRecord) {
     return true;
   }
-  protected virtual Boolean afterUndeleteFilter(SObject newRecord) {
+  protected virtual Boolean afterUndeleteFilter(TW_Context ctx, SObject newRecord) {
     return true;
+  }
+
+  public void executePreProcess(TW_Context ctx) {
+    switch on ctx.getOperation() {
+      when BEFORE_INSERT {
+        this.beforeInsertPreProcess(ctx);
+        for (SObject newRecord : ctx.getNew()) {
+          if (this.beforeInsertFilter(ctx, newRecord)) {
+            ctx.addFilteredRecord(this.t, newRecord);
+          }
+        }
+      }
+      when AFTER_INSERT {
+        this.afterInsertPreProcess(ctx);
+        for (SObject newRecord : ctx.getNew()) {
+          if (this.afterInsertFilter(ctx, newRecord)) {
+            ctx.addFilteredRecord(this.t, newRecord);
+          }
+        }
+      }
+      when BEFORE_UPDATE {
+        this.beforeUpdatePreProcess(ctx);
+        for (SObject newRecord : ctx.getNew()) {
+          SObject oldRecord = ctx.getOldMap().get(newRecord.Id);
+          if (this.beforeUpdateFilter(ctx, oldRecord, newRecord)) {
+            ctx.addFilteredRecord(this.t, newRecord);
+          }
+        }
+      }
+      when AFTER_UPDATE {
+        this.afterUpdatePreProcess(ctx);
+        System.debug('checking...');
+        for (SObject newRecord : ctx.getNew()) {
+          SObject oldRecord = ctx.getOldMap().get(newRecord.Id);
+          System.debug(newRecord);
+          System.debug(oldRecord);
+          if (this.afterUpdateFilter(ctx, oldRecord, newRecord)) {
+            System.debug('adding');
+            ctx.addFilteredRecord(this.t, newRecord);
+          }
+        }
+      }
+      when BEFORE_DELETE {
+        this.beforeDeletePreProcess(ctx);
+        for (SObject oldRecord : ctx.getOld()) {
+          if (this.beforeDeleteFilter(ctx, oldRecord)) {
+            ctx.addFilteredRecord(this.t, oldRecord);
+          }
+        }
+      }
+      when AFTER_DELETE {
+        this.afterDeletePreProcess(ctx);
+        for (SObject oldRecord : ctx.getOld()) {
+          if (this.afterDeleteFilter(ctx, oldRecord)) {
+            ctx.addFilteredRecord(this.t, oldRecord);
+          }
+        }
+      }
+      when AFTER_UNDELETE {
+        this.afterUndeletePreProcess(ctx);
+        for (SObject newRecord : ctx.getNew()) {
+          if (this.afterUndeleteFilter(ctx, newRecord)) {
+            ctx.addFilteredRecord(this.t, newRecord);
+          }
+        }
+      }
+    }
   }
 
   public void execute(TW_Context ctx) {
-    a.execute(this, ctx);
-  }
-
-  private interface Action {
-    void execute(TW_Function function, TW_Context ctx);
-    ASB_Select selection(TW_Function function, ASB_Select selection);
-  }
-
-  private class BeforeInsertAction implements Action {
-    private BeforeInsertAction() {
-    }
-    public void execute(TW_Function function, TW_Context ctx) {
-      function.beforeInsert(ctx);
-      for (SObject newRecord : ctx.newRecords) {
-        if (function.beforeInsertFilter(newRecord)) {
-          function.beforeInsert(newRecord);
+    switch on ctx.getOperation() {
+      when BEFORE_INSERT {
+        for (SObject newRecord : ctx.filteredRecords()) {
+          if (this.beforeInsertFilter(ctx, newRecord)) {
+            this.beforeInsert(ctx, newRecord);
+          }
         }
       }
-    }
-    public ASB_SELECT selection(TW_Function function, ASB_Select selection) {
-      return selection;
-    }
-  }
-  private class AfterInsertAction implements Action {
-    private AfterInsertAction() {
-    }
-    public void execute(TW_Function function, TW_Context ctx) {
-      function.afterInsert(ctx);
-      for (SObject newRecord : ctx.newRecords) {
-        if (function.afterInsertFilter(newRecord)) {
-          function.afterInsert(newRecord);
+      when AFTER_INSERT {
+        for (SObject newRecord : ctx.filteredRecords()) {
+          if (this.afterInsertFilter(ctx, newRecord)) {
+            this.afterInsert(ctx, newRecord, ctx.getQueriedRecordMap().get(newRecord.Id));
+          }
         }
       }
-    }
-    public ASB_Select selection(TW_Function function, ASB_Select selection) {
-      return selection;
-    }
-  }
-  private class BeforeUpdateAction implements Action {
-    private BeforeUpdateAction() {
-    }
-    public void execute(TW_Function function, TW_Context ctx) {
-      function.beforeUpdate(ctx);
-      for (SObject newRecord : ctx.newRecords) {
-        SObject oldRecord = ctx.oldRecordsMap.get(newRecord.Id);
-        if (function.beforeUpdateFilter(oldRecord, newRecord)) {
-          function.beforeUpdate(oldRecord, newRecord, ctx.queriedRecordsMap.get(newRecord.Id));
+      when BEFORE_UPDATE {
+        for (SObject newRecord : ctx.filteredRecords()) {
+          SObject oldRecord = ctx.getOldMap().get(newRecord.Id);
+          if (this.beforeUpdateFilter(ctx, oldRecord, newRecord)) {
+            this.beforeUpdate(ctx, oldRecord, newRecord, ctx.getQueriedRecordMap().get(newRecord.Id));
+          }
         }
       }
-    }
-    public ASB_Select selection(TW_Function function, ASB_Select selection) {
-      return function.beforeUpdateSelection(selection);
-    }
-  }
-  private class AfterUpdateAction implements Action {
-    private AfterUpdateAction() {
-    }
-    public void execute(TW_Function function, TW_Context ctx) {
-      function.afterUpdate(ctx);
-      for (SObject newRecord : ctx.newRecords) {
-        SObject oldRecord = ctx.oldRecordsMap.get(newRecord.Id);
-        if (function.afterUpdateFilter(oldRecord, newRecord)) {
-          function.afterUpdate(oldRecord, newRecord, ctx.queriedRecordsMap.get(newRecord.Id));
+      when AFTER_UPDATE {
+        for (SObject newRecord : ctx.filteredRecords()) {
+          SObject oldRecord = ctx.getOldMap().get(newRecord.Id);
+          if (this.afterUpdateFilter(ctx, oldRecord, newRecord)) {
+            this.afterUpdate(ctx, oldRecord, newRecord, ctx.getQueriedRecordMap().get(newRecord.Id));
+          }
         }
       }
-    }
-    public ASB_Select selection(TW_Function function, ASB_Select selection) {
-      return function.afterUpdateSelection(selection);
-    }
-  }
-  private class BeforeDeleteAction implements Action {
-    private BeforeDeleteAction() {
-    }
-    public void execute(TW_Function function, TW_Context ctx) {
-      function.beforeDelete(ctx);
-      for (SObject oldRecord : ctx.oldRecords) {
-        if (function.beforeDeleteFilter(oldRecord)) {
-          function.beforeDelete(oldRecord, ctx.queriedRecordsMap.get(oldRecord.Id));
+      when BEFORE_DELETE {
+        for (SObject oldRecord : ctx.filteredRecords()) {
+          if (this.beforeDeleteFilter(ctx, oldRecord)) {
+            this.beforeDelete(ctx, oldRecord, ctx.getQueriedRecordMap().get(oldRecord.Id));
+          }
         }
       }
-    }
-    public ASB_Select selection(TW_Function function, ASB_Select selection) {
-      return function.beforeDeleteSelection(selection);
-    }
-  }
-  private class AfterDeleteAction implements Action {
-    private AfterDeleteAction() {
-    }
-    public void execute(TW_Function function, TW_Context ctx) {
-      function.afterDelete(ctx);
-      for (SObject oldRecord : ctx.oldRecords) {
-        if (function.afterDeleteFilter(oldRecord)) {
-          function.afterDelete(oldRecord, ctx.queriedRecordsMap.get(oldRecord.Id));
+      when AFTER_DELETE {
+        for (SObject oldRecord : ctx.filteredRecords()) {
+          if (this.afterDeleteFilter(ctx, oldRecord)) {
+            this.afterDelete(ctx, oldRecord, ctx.getQueriedRecordMap().get(oldRecord.Id));
+          }
         }
       }
-    }
-    public ASB_Select selection(TW_Function function, ASB_Select selection) {
-      return function.afterDeleteSelection(selection);
-    }
-  }
-  private class AfterUndeleteAction implements Action {
-    private AfterUndeleteAction() {
-    }
-    public void execute(TW_Function function, TW_Context ctx) {
-      function.afterUndelete(ctx);
-      for (SObject newRecord : ctx.newRecords) {
-        if (function.afterUndeleteFilter(newRecord)) {
-          function.afterUndelete(newRecord, ctx.queriedRecordsMap.get(newRecord.Id));
+      when AFTER_UNDELETE {
+        for (SObject newRecord : ctx.filteredRecords()) {
+          if (this.afterUndeleteFilter(ctx, newRecord)) {
+            this.afterUndelete(ctx, newRecord, ctx.getQueriedRecordMap().get(newRecord.Id));
+          }
         }
       }
-    }
-    public ASB_Select selection(TW_Function function, ASB_Select selection) {
-      return function.afterUndeleteSelection(selection);
     }
   }
 }

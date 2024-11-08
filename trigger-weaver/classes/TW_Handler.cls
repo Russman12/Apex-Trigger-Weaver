@@ -1,6 +1,7 @@
 public class TW_Handler {
   //TODO: handle DML operations
   private static final Set<System.TriggerOperation> QUERY_CONTEXTS = new Set<System.TriggerOperation>{
+    System.TriggerOperation.AFTER_INSERT,
     System.TriggerOperation.BEFORE_UPDATE,
     System.TriggerOperation.AFTER_UPDATE,
     System.TriggerOperation.BEFORE_DELETE,
@@ -8,6 +9,7 @@ public class TW_Handler {
     System.TriggerOperation.AFTER_UNDELETE
   };
 
+  private static final String BIND_NAME = 'records';
   private static final Set<Type> bypasses = new Set<Type>();
   private static Map<Schema.SObjectType, List<Trigger_Weaver__mdt>> activeTWSBySObj;
   private static List<Trigger_Weaver__mdt> getActiveTWSForSObj(Schema.SObjectType sObjType) {
@@ -51,64 +53,68 @@ public class TW_Handler {
   }
 
   private List<TW_Function> twFunctions = new List<TW_Function>();
-  private final ASB_Select selection;
   private final ASB soql;
   private final SObjectType sObjType;
+  private final TW_Context ctx;
+  private final Map<String, Object> queryBinds;
+  private final Map<Id, SObject> queriedRecordsMap;
 
   public static TW_Handler make(Schema.SObjectType sObjType) {
-    //throw execption if not in trigger context
-    if (!Trigger.isExecuting) {
-      throw new NonTriggerContextException('Unable to create TW_Handler outside of a trigger context');
-    }
     return new TW_Handler(sObjType);
   }
 
   private TW_Handler(Schema.SObjectType sObjType) {
     this.sObjType = sObjType;
-    if (QUERY_CONTEXTS.contains(Trigger.operationType)) {
-      Schema.SObjectField idField = sObjType.getDescribe().fields.getMap().get('Id');
-      this.selection = ASB_Select.make().field(idField);
-      this.soql = ASB.sObject(sObjType).selection(this.selection).filter(ASB_Where.field(idField).isIn().bind('records'));
-    }
+    Schema.SObjectField idField = sObjType.getDescribe().fields.getMap().get('Id');
+    this.soql = ASB.sObject(sObjType).filter(ASB_Where.field(idField).isIn().bind(BIND_NAME));
+    this.queriedRecordsMap = new Map<Id, SObject>();
+
+    this.ctx = new TW_Context(idField, queriedRecordsMap);
+    this.queryBinds = new Map<String, Object>();
   }
 
   public TW_Handler register(TW_Function function) {
-    function.setAction(Trigger.operationType);
     twFunctions.add(function);
 
     return this;
   }
 
   public TW_Handler autoRegister() {
-    for (Trigger_Weaver__mdt tw : getActiveTWSForSObj(this.sObjType)) {
-      register((TW_Function) Type.forName(tw.DeveloperName).newInstance());
+    List<Trigger_Weaver__mdt> tws = getActiveTWSForSObj(this.sObjType);
+    if (tws == null) {
+      return this;
+    }
+
+    for (Trigger_Weaver__mdt tw : tws) {
+      register((TW_Function) System.Type.forName(tw.DeveloperName).newInstance());
     }
 
     return this;
   }
 
   public void execute() {
-    TW_Context ctx;
     for (TW_Function function : this.twFunctions) {
-      if (bypasses.contains(function.t)) {
+      if (bypasses.contains(function.getType())) {
         continue;
       }
 
-      function.querySelection(this.selection);
+      function.executePreProcess(this.ctx);
     }
-    if (this.soql != null) {
-      ctx = new TW_Context(this.soql);
-    } else {
-      ctx = new TW_Context();
+    System.debug(this.ctx.hasSelection());
+    System.debug(this.ctx.isQueryContext());
+    System.debug(this.ctx.filteredRecords());
+    if (this.ctx.hasSelection() && this.ctx.isQueryContext() && this.ctx.filteredRecords().size() > 0) {
+      System.debug(this.soql);
+      this.soql.selection(this.ctx.getQuerySelection());
+      this.queryBinds.put(BIND_NAME, this.ctx.filteredRecords());
+      this.queriedRecordsMap.putAll(new Map<Id, SObject>(this.soql.query(this.queryBinds)));
     }
+
     for (TW_Function function : twFunctions) {
-      if (bypasses.contains(function.t)) {
+      if (bypasses.contains(function.getType())) {
         continue;
       }
-      function.execute(ctx);
+      function.execute(this.ctx);
     }
-  }
-
-  private class NonTriggerContextException extends Exception {
   }
 }
