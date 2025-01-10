@@ -3,20 +3,20 @@ public with sharing class ContactTWAccNameMismatch extends TW_Function {
     super(ContactTWAccNameMismatch.class);
   }
 
-  protected override void afterUpdatePreProcess(TW_Context ctx) {
-    ctx.addQuerySelection(ASB_Select.make().parent(Contact.AccountId, Account.Name));
+  protected override void afterUpdatePreProcess(ASB_Select selection) {
+    selection.parent(Contact.AccountId, Account.Name);
   }
 
   /**
    * Only when FirstName or LastName has changed
    */
-  protected override Boolean afterUpdateFilter(TW_Context ctx, SObject oldRecord, SObject newRecord) {
+  protected override Boolean afterUpdateFilter(SObject oldRecord, SObject newRecord) {
     Contact oldContact = (Contact) oldRecord;
     Contact newContact = (Contact) newRecord;
     return oldContact.FirstName != newContact.FirstName || oldContact.LastName != newContact.LastName;
   }
 
-  protected override List<SObject> afterUpdate(TW_Context ctx, SObject oldRecord, SObject newRecord, SObject queriedRecord) {
+  protected override List<SObject> afterUpdate(SObject oldRecord, SObject newRecord, SObject queriedRecord) {
     Contact oldContact = (Contact) oldRecord;
     Contact newContact = (Contact) newRecord;
     Contact queriedContact = (Contact) queriedRecord;

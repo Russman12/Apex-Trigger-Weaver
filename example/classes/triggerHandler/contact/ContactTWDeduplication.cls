@@ -3,33 +3,35 @@ public with sharing class ContactTWDeduplication extends TW_Function {
     super(ContactTWDeduplication.class);
   }
 
-  private static final ASB_Select SELECTION = ASB_Select.make()
-    .stitch(
-      ASB_StitchQuery.relatedBy(new List<Schema.SObjectField>{ Contact.AccountId, Contact.AccountId })
-        .selection(ASB_Select.make().field(Contact.AccountId).field(Contact.LastName).field(Contact.FirstName))
-    );
+  private static final ASB_StitchQuery STITCH_QUERY = ASB_StitchQuery.relatedBy(Contact.AccountId, Contact.AccountId)
+    .selection(ASB_Select.make().field(Contact.Id).field(Contact.AccountId).field(Contact.LastName).field(Contact.FirstName));
 
-  protected override void afterInsertPreProcess(TW_Context ctx) {
-    ctx.addQuerySelection(SELECTION);
+  protected override void afterInsertPreProcess(ASB_Select selection) {
+    System.debug(selection.clauseString());
+    selection.stitch(STITCH_QUERY);
+    System.debug(selection.clauseString());
   }
 
-  protected override Boolean afterInsertFilter(TW_Context ctx, SObject newRecord) {
+  protected override Boolean afterInsertFilter(SObject newRecord) {
     return ((Contact) newRecord).AccountId != null;
   }
 
-  protected override List<SObject> afterInsert(TW_Context ctx, SObject newRecord, SObject queriedRecord) {
-    validate((Contact) newRecord, (List<Contact>) ctx.getNew(), ((Contact) queriedRecord).Account.Contacts);
+  protected override List<SObject> afterInsert(SObject newRecord, SObject queriedRecord) {
+    System.debug(newRecord);
+    System.debug(queriedRecord);
+    System.debug(getContext());
+    validate((Contact) newRecord, (List<Contact>) getContext().getNew(), ((Contact) queriedRecord).Account.Contacts);
     return null;
   }
 
-  protected override void afterUpdatePreProcess(TW_Context ctx) {
-    ctx.addQuerySelection(SELECTION);
+  protected override void afterUpdatePreProcess(ASB_Select selection) {
+    selection.stitch(STITCH_QUERY);
   }
 
   /**
    * If has parent account and firstname or lastname has changed
    */
-  protected override Boolean afterUpdateFilter(TW_Context ctx, SObject oldRecord, SObject newRecord) {
+  protected override Boolean afterUpdateFilter(SObject oldRecord, SObject newRecord) {
     Contact oldContact = (Contact) oldRecord;
     Contact newContact = (Contact) newRecord;
     return oldContact.AccountId != null &&
@@ -37,11 +39,11 @@ public with sharing class ContactTWDeduplication extends TW_Function {
       oldContact.LastName != newContact.LastName);
   }
 
-  protected override List<SObject> afterUpdate(TW_Context ctx, SObject oldRecord, SObject newRecord, SObject queriedRecord) {
+  protected override List<SObject> afterUpdate(SObject oldRecord, SObject newRecord, SObject queriedRecord) {
     System.debug((Contact) queriedRecord);
     System.debug(((Contact) queriedRecord).Account);
     System.debug(((Contact) queriedRecord).Account.Contacts);
-    validate((Contact) newRecord, (List<Contact>) ctx.getNew(), ((Contact) queriedRecord).Account.Contacts);
+    validate((Contact) newRecord, (List<Contact>) getContext().getNew(), ((Contact) queriedRecord).Account.Contacts);
     return null;
   }
 

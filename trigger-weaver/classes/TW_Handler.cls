@@ -58,6 +58,7 @@ public class TW_Handler {
   private final TW_Context ctx;
   private final Map<String, Object> queryBinds;
   private final Map<Id, SObject> queriedRecordsMap;
+  private final ASB_Select selection;
 
   public static TW_Handler make(Schema.SObjectType sObjType) {
     return new TW_Handler(sObjType);
@@ -66,7 +67,9 @@ public class TW_Handler {
   private TW_Handler(Schema.SObjectType sObjType) {
     this.sObjType = sObjType;
     Schema.SObjectField idField = sObjType.getDescribe().fields.getMap().get('Id');
-    this.soql = ASB.sObject(sObjType).filter(ASB_Where.field(idField).isIn().bind(BIND_NAME));
+
+    this.selection = ASB_Select.make().field(idField);
+    this.soql = ASB.sObject(sObjType).filter(ASB_Where.field(idField).isIn().bind(BIND_NAME)).selection(this.selection);
     this.queriedRecordsMap = new Map<Id, SObject>();
 
     this.ctx = new TW_Context(idField, queriedRecordsMap);
@@ -98,14 +101,22 @@ public class TW_Handler {
         continue;
       }
 
-      function.executePreProcess(this.ctx);
+      function.setContext(this.ctx);
+      function.executePreProcess();
+
+      ASB_Select funcSelect = this.ctx.getQuerySelection(function.getType());
+      if (funcSelect != null) {
+        this.selection.combine(funcSelect);
+      }
     }
-    System.debug(this.ctx.hasSelection());
+    System.debug('What?');
+    System.debug(this.ctx.getQuerySelections().isEmpty());
     System.debug(this.ctx.isQueryContext());
     System.debug(this.ctx.filteredRecords());
-    if (this.ctx.hasSelection() && this.ctx.isQueryContext() && this.ctx.filteredRecords().size() > 0) {
+
+    if (!this.ctx.getQuerySelections().isEmpty() && this.ctx.isQueryContext() && this.ctx.filteredRecords().size() > 0) {
+      System.debug('querying...');
       System.debug(this.soql);
-      this.soql.selection(this.ctx.getQuerySelection());
       this.queryBinds.put(BIND_NAME, this.ctx.filteredRecords());
       this.queriedRecordsMap.putAll(new Map<Id, SObject>(this.soql.query(this.queryBinds)));
     }
@@ -114,7 +125,7 @@ public class TW_Handler {
       if (bypasses.contains(function.getType())) {
         continue;
       }
-      function.execute(this.ctx);
+      function.execute();
     }
   }
 }

@@ -19,11 +19,10 @@ public with sharing class TW_Context {
   private final Map<Id, SObject> newRecordsMap;
   private final Map<Id, SObject> queriedRecordsMap;
   private final System.TriggerOperation operation;
-  private final ASB_Select selection;
-  private Boolean hasSelection;
 
   private final Map<System.Type, List<SObject>> filteredRecords;
   private final List<SObject> globalFilteredRecords;
+  private final Map<System.Type, ASB_Select> querySelections;
 
   public TW_Context(Schema.SObjectField idField, Map<Id, SObject> queriedRecordsMap) {
     //throw execption if not in trigger context
@@ -36,26 +35,24 @@ public with sharing class TW_Context {
     this.oldRecordsMap = Trigger.oldMap;
     this.newRecordsMap = Trigger.newMap;
     this.operation = Trigger.operationType;
-    this.hasSelection = false;
     this.filteredRecords = new Map<System.Type, List<SObject>>();
     this.globalFilteredRecords = new List<SObject>();
+    this.querySelections = new Map<System.Type, ASB_Select>();
 
-    this.selection = ASB_Select.make().field(idField);
     this.queriedRecordsMap = queriedRecordsMap;
-    System.debug(this.operation);
   }
 
-  public void addQuerySelection(ASB_Select selection) {
-    this.hasSelection = true;
-    this.selection.combine(selection);
+  public void addQuerySelection(Type t, ASB_Select selection) {
+    System.debug('adding?');
+    this.querySelections.put(t, selection);
   }
 
-  public ASB_Select getQuerySelection() {
-    return this.selection;
+  public Map<Type, ASB_Select> getQuerySelections() {
+    return this.querySelections;
   }
 
-  public Boolean hasSelection() {
-    return this.hasSelection;
+  public ASB_Select getQuerySelection(Type t) {
+    return this.querySelections.get(t);
   }
 
   public Boolean isQueryContext() {
