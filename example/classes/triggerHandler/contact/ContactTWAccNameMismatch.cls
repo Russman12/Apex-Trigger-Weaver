@@ -21,11 +21,9 @@ public with sharing class ContactTWAccNameMismatch extends TW_Function {
     Contact newContact = (Contact) newRecord;
     Contact queriedContact = (Contact) queriedRecord;
 
-    List<Account> accUpdates = new List<Account>();
     if (queriedContact.Account.Name != newContact.Name) {
-      accUpdates.add(new Account(Id = queriedContact.Account.Id, Name = ContactBusinessLogic.fullName(newContact)));
+      updateRecord(new Account(Id = queriedContact.Account.Id, Name = ContactBusinessLogic.fullName(newContact)));
     }
-    update accUpdates;
 
     return null;
   }

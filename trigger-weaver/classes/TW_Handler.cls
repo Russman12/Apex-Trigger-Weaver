@@ -109,14 +109,7 @@ public class TW_Handler {
         this.selection.combine(funcSelect);
       }
     }
-    System.debug('What?');
-    System.debug(this.ctx.getQuerySelections().isEmpty());
-    System.debug(this.ctx.isQueryContext());
-    System.debug(this.ctx.filteredRecords());
-
     if (!this.ctx.getQuerySelections().isEmpty() && this.ctx.isQueryContext() && this.ctx.filteredRecords().size() > 0) {
-      System.debug('querying...');
-      System.debug(this.soql);
       this.queryBinds.put(BIND_NAME, this.ctx.filteredRecords());
       this.queriedRecordsMap.putAll(new Map<Id, SObject>(this.soql.query(this.queryBinds)));
     }
@@ -127,5 +120,13 @@ public class TW_Handler {
       }
       function.execute();
     }
+
+    List<SObject> updates = new List<SObject>();
+    for (TW_Function function : twFunctions) {
+      updates.addAll(function.getUpdates());
+    }
+
+    updates.sort();
+    update updates;
   }
 }
